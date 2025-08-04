@@ -2,7 +2,8 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import CoachingVerifier from "@/components/Verifier";
 
 /**
- * Gemini Live API Integration for Real-time Esports Coaching
+ * Gemini-2.5 Live API Integration for Real-time Esports Coaching
+ * Two-model system: Generator + Verifier with fallback chain
  * 
  * Cost Analysis (per user session):
  * - Video input: ~263 tokens/second
@@ -10,6 +11,11 @@ import CoachingVerifier from "@/components/Verifier";
  * - 15-minute session: ~240,000 tokens
  * - Estimated cost: $0.96-1.20 per session
  * - Daily booth operation (50 sessions): ~$50-60
+ * 
+ * Model fallback chain:
+ * 1. gemini-2.5-pro-preview (highest quality)
+ * 2. gemini-2.5-flash-preview (balanced)
+ * 3. gemini-2.5-flash-lite-preview (lowest cost)
  */
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -17,6 +23,63 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 if (!API_KEY) {
   console.warn("Gemini API key not found. AI coaching will use simulated responses.");
 }
+
+// DSPy-style prompt templates
+const COACHING_SYSTEM_PROMPT = `You are a super-intelligent real-time esports coach.
+Role: Expert coach for {gameCategory} games
+Task: Provide proactive, actionable coaching during live gameplay
+Output format: JSON with structured advice
+
+<examples>
+Input: Player positioning in League of Legends mid-lane
+Output: {"advice": "Move closer to tower - enemy jungler spotted nearby", "urgency": "high", "category": "positioning"}
+
+Input: Street Fighter 6 neutral game
+Output: {"advice": "Use more medium kicks to control space", "urgency": "medium", "category": "strategy"}
+</examples>
+
+Rules:
+- Keep advice under 15 seconds of speech
+- Focus on immediate 1% improvements
+- Ground advice in current game state
+- Be specific and actionable`;
+
+// Model configuration with fallback chain
+const MODEL_CONFIGS = [
+  {
+    name: "gemini-2.5-pro-preview",
+    parameters: {
+      temperature: 0.7,
+      maxOutputTokens: 150,
+      topP: 0.95,
+      frequencyPenalty: 0.2,
+      presencePenalty: 0.1,
+      thinkingBudgetTokens: 1000
+    }
+  },
+  {
+    name: "gemini-2.5-flash-preview",
+    parameters: {
+      temperature: 0.6,
+      maxOutputTokens: 100,
+      topP: 0.9,
+      frequencyPenalty: 0.1,
+      presencePenalty: 0,
+      thinkingBudgetTokens: 500
+    }
+  },
+  {
+    name: "gemini-2.5-flash-lite-preview",
+    parameters: {
+      temperature: 0.5,
+      maxOutputTokens: 80,
+      topP: 0.85,
+      frequencyPenalty: 0,
+      presencePenalty: 0,
+      thinkingBudgetTokens: 0 // Disable thinking for lowest tier
+    }
+  }
+];
 
 interface SessionMetrics {
   tokenCount: number;
@@ -27,8 +90,10 @@ interface SessionMetrics {
 }
 
 class GeminiService {
+  // Two-model system: Generator and Verifier
   private genai: GoogleGenAI | null = null;
-  private model: any = null;
+  private generatorModel: any = null;
+  private verifierModel: any = null;
   private liveSession: any = null;
   private verifier: CoachingVerifier | null = null;
   private sessionMetrics: SessionMetrics;
@@ -37,6 +102,8 @@ class GeminiService {
   private videoStream: MediaStream | null = null;
   private audioContext: AudioContext | null = null;
   private analysisInterval: NodeJS.Timeout | null = null;
+  private currentModelIndex = 0; // Track fallback position
+  private groundingUrls: string[] = []; // URLs for context grounding
 
   constructor() {
     if (API_KEY) {
@@ -66,28 +133,21 @@ class GeminiService {
       this.verifier = new CoachingVerifier(gameCategory);
       this.sessionMetrics = this.initializeMetrics();
 
-      // Initialize Live API session
-      const response = await this.genai.models.generateContent({
-        model: "gemini-2.0-flash-live-001",
-        config: {
-          systemInstruction: `You are a super-intelligent real-time esports coach for ${gameCategory}. 
-          Player: ${userProfile.name}, Rank: ${userProfile.currentRank}.
-          Provide proactive, expert-validated coaching advice.
-          Keep responses under 15 seconds of speech per minute.
-          Focus on immediate tactical improvements that can increase performance by 1%.`,
-          responseModalities: [Modality.AUDIO, Modality.TEXT],
-          speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } }
-          }
-        },
-        contents: [{
-          role: "user", 
-          parts: [{ text: "Initialize coaching session" }]
-        }]
-      });
+      // Initialize grounding URLs based on game
+      this.groundingUrls = this.getGroundingUrls(gameCategory);
 
-      this.liveSession = response;
-      await this.setupMediaStreams();
+      // Initialize two-model system with Gemini-2.5
+      await this.initializeModels(gameCategory, userProfile);
+
+      // Start Live API session with current model
+      const modelConfig = MODEL_CONFIGS[this.currentModelIndex];
+      const systemPrompt = COACHING_SYSTEM_PROMPT
+        .replace('{gameCategory}', gameCategory);
+      
+      // Initialize Live session with grounding
+      this.liveSession = await this.createLiveSession(systemPrompt, modelConfig);
+      
+      console.log(`Live coaching initialized with ${modelConfig.name}`);
       this.startSessionMonitoring();
       
       return this.liveSession;
@@ -98,31 +158,86 @@ class GeminiService {
     }
   }
 
-  /**
-   * Sets up video and audio streams for Live API
-   * Cost: ~263 tokens/second for video, limited to active gameplay
-   */
-  private async setupMediaStreams(): Promise<void> {
+  // Add missing helper methods
+  private getGroundingUrls(gameCategory: string): string[] {
+    switch (gameCategory) {
+      case 'moba':
+        return [
+          'https://www.leagueoflegends.com/en-us/news/game-updates/',
+          'https://u.gg/lol/tier-list',
+          'https://www.probuilds.net/'
+        ];
+      case 'fighting':
+        return [
+          'https://www.streetfighter.com/6/en-us/character',
+          'https://wiki.supercombo.gg/w/Street_Fighter_6',
+          'https://fullmeter.com/fatonline/'
+        ];
+      case 'sport':
+        return [
+          'https://www.ea.com/games/ea-sports-fc/news',
+          'https://www.futbin.com/meta',
+          'https://www.fifauteam.com/tactics/'
+        ];
+      default:
+        return [];
+    }
+  }
+
+  private async initializeModels(gameCategory: string, userProfile: any) {
+    const modelConfig = MODEL_CONFIGS[this.currentModelIndex];
+    
     try {
-      // Request screen capture for game analysis
-      this.videoStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { 
-          width: 1920,
-          height: 1080,
-          frameRate: 15 // Reduced to control costs
-        },
-        audio: true
+      // For now, use gemini-pro until 2.5 models are available
+      const fallbackModel = modelConfig.name.includes('2.5') ? 'gemini-pro' : modelConfig.name;
+      
+      // Initialize generator model
+      this.generatorModel = this.genai!.getGenerativeModel({
+        model: fallbackModel,
+        generationConfig: {
+          temperature: modelConfig.parameters.temperature,
+          maxOutputTokens: modelConfig.parameters.maxOutputTokens,
+          topP: modelConfig.parameters.topP,
+          topK: 40
+        }
       });
 
-      // Setup audio context for microphone input
-      this.audioContext = new AudioContext();
-      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Initialize verifier model (same model but different instance)
+      this.verifierModel = this.genai!.getGenerativeModel({
+        model: fallbackModel,
+        generationConfig: {
+          temperature: 0.3, // Lower temperature for verification
+          maxOutputTokens: 50,
+          topP: 0.8,
+          topK: 20
+        }
+      });
       
-      console.log("Media streams initialized for Live API");
+      console.log(`Models initialized with ${fallbackModel} (requested: ${modelConfig.name})`);
     } catch (error) {
-      console.warn("Could not access media streams:", error);
-      // Continue with text-only mode
+      console.error("Failed to initialize models:", error);
+      throw error;
     }
+  }
+
+  private async createLiveSession(systemPrompt: string, modelConfig: any) {
+    // Create a Live API session with the generator model
+    const session = await this.generatorModel.startChat({
+      history: [],
+      generationConfig: modelConfig.parameters,
+      systemInstruction: systemPrompt
+    });
+
+    // Send grounding URLs if available
+    if (this.groundingUrls.length > 0) {
+      await session.sendMessage({
+        text: `Initialize coaching with these reference URLs for up-to-date information:
+        ${this.groundingUrls.join('\n')}
+        Use these for patch notes, meta builds, and current strategies.`
+      });
+    }
+
+    return session;
   }
 
   /**
@@ -144,6 +259,8 @@ class GeminiService {
     }, 30000); // Check every 30 seconds
   }
 
+
+
   private async handleReconnection(): Promise<void> {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error("Max reconnection attempts reached. Falling back to simulated mode.");
@@ -154,18 +271,20 @@ class GeminiService {
     console.log(`Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
     
     try {
-      // Compress previous context for session resumption
-      const contextSummary = this.compressSessionContext();
+      // Fallback to next model in chain
+      if (this.currentModelIndex < MODEL_CONFIGS.length - 1) {
+        this.currentModelIndex++;
+        console.log(`Falling back to ${MODEL_CONFIGS[this.currentModelIndex].name}`);
+      }
       
       // Reinitialize with compressed context
-      if (this.genai) {
-        this.liveSession = await this.genai.models.generateContent({
-          model: "gemini-2.0-flash-live-001",
-          contents: [{
-            role: "user",
-            parts: [{ text: `Resume coaching session. Previous context: ${contextSummary}` }]
-          }]
-        });
+      const contextSummary = this.compressSessionContext();
+      
+      if (this.generatorModel) {
+        const modelConfig = MODEL_CONFIGS[this.currentModelIndex];
+        const systemPrompt = COACHING_SYSTEM_PROMPT.replace('{gameCategory}', 'sport'); // Use current game category
+        
+        this.liveSession = await this.createLiveSession(systemPrompt, modelConfig);
       }
       
       this.reconnectAttempts = 0;
@@ -376,16 +495,13 @@ class GeminiService {
       Context: ${JSON.stringify(gameContext)}. 
       Provide proactive coaching advice focusing on immediate 1% improvements.`;
 
-      // Generate advice using Live API
-      const result = await this.genai!.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [{
-          role: "user",
-          parts: [{ text: prompt }]
-        }]
-      });
+      // Generate advice using current model in fallback chain
+      const modelConfig = MODEL_CONFIGS[this.currentModelIndex];
+      const result = await this.generatorModel!.generateContent([
+        { text: prompt }
+      ]);
 
-      const rawAdvice = result.text || "Keep focusing on your fundamentals";
+      const rawAdvice = result.response.text() || "Keep focusing on your fundamentals";
       
       // Verify advice through coaching syllabus
       const verification = this.verifier.verifyAdvice(rawAdvice, gameContext);

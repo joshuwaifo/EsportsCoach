@@ -1,0 +1,28 @@
+Project goal: Build a ReactJS/TypeScript application for a super‑intelligent real‑time esports coach. It runs continuously at the Esports World Cup booth, delivering live coaching and post‑match analysis via Gemini’s Live API. The coach must be proactive, reliable and grounded in expert coaching principles.
+1. Generator and verifier phases with Gemini‑2.5 models only:
+ • Generator: Use Gemini‑2.5 models exclusively in the Live API. Start with gemini-2.5-pro-preview and, if performance or cost issues arise, progressively fall back to gemini-2.5-flash-preview and gemini-2.5-flash-lite-preview by reducing the thinking budget and disabling thinking mode in the session config. Each fallback keeps you within the 2.5 family while trading off quality for speed/cost.
+ • Verifier: Instantiate a separate Gemini‑2.5 model (same fallback chain) to validate or filter the generator’s outputs. This model applies the coaching syllabus and DS‑style prompt‑validation techniques, rejecting irrelevant or inaccurate advice. Use a simple rule‑based function as a final filter when needed.
+ • Prompt optimisation: Write concise, explicit system prompts following best practices from DeepLearning.AI’s Large Multimodal Model Prompting with Gemini short course (e.g., set clear roles, ask for structured outputs, provide examples). Apply DSPy techniques like variable‑delimited instructions, demonstration examples, and iterative refinement to maximise accuracy.
+ • Parameter tuning: Expose Gemini parameters in your code: temperature, max_output_tokens, top_p, frequency_penalty, presence_penalty. Use context‑grounding features such as urlContext or googleSearch within the Live API configuration for retrieval‑augmented coaching (e.g., fetch latest patch notes or official build guides).
+2. Resilience, cost control and session management:
+ • Implement automatic reconnection and context compression to handle session timeouts. Use session resumption handles provided by the Live API.
+ • Limit the thinking budget (i.e., token allowance for reasoning) to reduce latency and cost. For example, set thinkingBudgetTokens: 0 when using flash models.
+ • Keep the AI’s spoken output to ~15 seconds per minute to stay within budget; calculate token usage based on 263 tokens per second for video and 32 tokens per second for audiodevelopers.googleblog.com. Show estimated cost per second and per session in comments.
+ • Chunk large file uploads and show progress; warn when files exceed 1 GB.
+3. UI flow and components (unchanged from prior prompt):
+ • Sign‑up: Collect user info and allow selection of League of Legends, EA FC or Street Fighter 6. Use real logos (download or embed).
+ • Live coach overlay: Transparent overlay with AI icon, proactive chat log, mic/text input and toggle switch. Use verified advice only. Handle mislabeled scenarios gracefully.
+ • Recap dashboard: Video/key moments, AI chat log with timestamps, performance comparison, syllabus‑based drills and tips, error/warning section for misreported outcomes.
+ • Continuous operation: Reset for the next user while preserving anonymised data. Provide a netcafe‑style walkthrough for booth staff.
+4. Implementation and code requirements:
+ • Use React functional components (SignupPage.tsx, LiveCoachPage.tsx, RecapPage.tsx) and a separate Verifier.ts module implementing the syllabus verification using the second Gemini‑2.5 model.
+ • Integrate the Gemini Live API using the provided TypeScript snippet, modifying it to reference the chosen 2.5 model and exposing parameters for fallback.
+ • Use DSPy‑style prompts when sending requests to Gemini (clear delimiters, few‑shot examples, etc.).
+ • Allow grounding in web content: for example, call session.sendClientContent({ urlContext: ["https://official-gameguide.com/patch-notes"] }) to provide context.
+ • Document all major steps, noting where model selection, thinking budget, and prompting techniques are applied.
+5. Testing:
+ • Simulate different fallback scenarios (pro → flash → flash‑lite) to ensure the coach stays within the 2.5 family while balancing latency and quality.
+ • Confirm that the verifier catches incorrect advice (e.g., false match result, wrong build suggestions).
+ • Include examples of how to ground prompts using URL context or Google Search and how to update parameters at runtime.
+6. Final goal:
+ Create a robust, cost‑aware, two‑model coaching system that improves players by at least 1 % per session and is ready for deployment at the Esports World Cup.
