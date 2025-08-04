@@ -18,8 +18,8 @@ interface SignupPageProps {
 
 export default function SignupPage({ onComplete }: SignupPageProps) {
   const { setUser } = useGame();
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedMode, setSelectedMode] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('moba');
+  const [selectedMode, setSelectedMode] = useState<string>('live');
 
   const form = useForm<UserProfile>({
     resolver: zodResolver(userProfileSchema),
