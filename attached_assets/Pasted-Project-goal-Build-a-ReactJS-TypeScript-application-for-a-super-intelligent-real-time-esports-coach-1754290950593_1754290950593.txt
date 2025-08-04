@@ -1,0 +1,44 @@
+Project goal: Build a ReactJS/TypeScript application for a super‑intelligent real‑time esports coach. The coach will run continuously at the Esports World Cup booth, providing live guidance and post‑match analysis using Gemini’s Live API for streaming audio/video/text. It must be reliable, proactive (not just reactive), grounded in expert‑validated coaching principles, cost‑aware, and non‑intrusive.
+
+1. Architecture overview – generator and verifier phases:
+• Generator phase: Use the Gemini Live API (via @google/genai and WebSockets) to process the user’s game screen and microphone input in real time. Stream the video feed (gameplay) and audio/text from the user to the API, and receive low‑latency spoken feedback. Follow the sample code’s pattern for handling onmessage, handleTurn() and convertToWav().
+• Verifier phase: Before displaying any advice to the player, pass the generated suggestions through a verification layer. This layer should reference a coaching syllabus you create (load as a JSON file or static module) based on deep research into the best training programs for each esport. For example, consult professional coaching frameworks for football to create a syllabus for EA FC, or fighting‑game coaching principles for Street Fighter 6. Only allow advice that aligns with this syllabus; discard irrelevant or false statements (e.g. comments about midfield control during a free‑kick).
+
+2. Resilience and performance improvements:
+• Session resets: Implement logic to detect when the Live API session drops (e.g., after ~10 minutes) and automatically reconnect without losing context. Use the session resumption features of Gemini Live API (context compression and session handles).
+• File uploads: In the post‑game recap, allow users to upload recorded match videos for analysis. Handle large files by chunking uploads; provide a progress indicator and resume support so uploads don’t stall at 50%. Reject or warn if the file is >1 GB or provide a fallback (e.g., compress to lower resolution).
+• Latency handling: Buffer incoming messages and display them as soon as the AI finishes each turn, rather than waiting for full paragraphs. Include timestamps to detect and discard delayed advice (e.g., if a team has already scored but the AI is still talking about midfield).
+• Rate limiting and cost: Assume 263 tokens per second for video input and 32 tokens per second for audio output
+developers.googleblog.com
+. Only send video frames when necessary (e.g., while the ball is in play) and limit the AI’s spoken output to 15 seconds per minute to stay within budget. Include comments showing the cost per second and per session. Use the token counting method described in Google’s docs.
+
+3. User flow:
+• Sign‑up screen: Collect user info (name, age, gender, location, contact, in‑game name, stats) and let them pick one of three games (League of Legends, EA FC, Street Fighter 6). Display actual game logos instead of placeholders; fetch logos from the public internet or embed them as assets. Include mode selection (live vs post analysis) and preferred voice(s). Save this in state and allow multiple sessions.
+• Live coaching view: Show a transparent overlay on top of the simulated game screen, similar to a Discord overlay. It must include:
+– A visible AI coach icon (“bug”) indicating the system is active.
+– A chat log that displays verified advice from the AI. The AI should initiate suggestions proactively based on game state (e.g., during item selection, say which builds suit the matchup instead of reading item descriptions) and reference the coaching syllabus. Provide a mute/toggle switch to hide prompts while still monitoring in the background.
+– A small mic button and input field for the user to ask questions.
+– Error handling: if the AI fails to identify a scenario or gives wrong advice, show a warning and log the event for later analysis.
+• Recap dashboard: After ending a session or uploading a match, display a multi‑panel recap:
+– Video playback with timeline markers for goals or key moves.
+– Verified AI feedback with timestamps and whether the player followed it.
+– Performance metrics compared to other players.
+– Personalised drills and tips derived from the coaching syllabus.
+– A note if the AI misreported the match outcome, with a button to send manual feedback to developers.
+• Continuous operation: Provide a way to reset the app for the next user while retaining anonymised aggregated data for improvement. This must work for an all‑day operation at the Esports World Cup booth.
+
+4. Implementation details:
+• Use React functional components and hooks. Separate the code into SignUpPage.tsx, LiveCoachPage.tsx, RecapPage.tsx, and Verifier.ts for the syllabus logic.
+• Integrate the Gemini Live API as shown in the provided snippet; keep the helper functions (convertToWav, saveBinaryFile) and session callbacks.
+• For the verification layer, implement a function that takes AI‑generated text and returns true/false based on whether it matches known coaching principles for the selected game. This function can also modify the text (e.g., paraphrase for clarity).
+• Add placeholders for connecting to a backend or analytics service to log sessions and errors.
+• Use CSS modules or styled‑components for styling; ensure the overlay is non‑intrusive.
+• Include cost annotations in comments to show how token usage and API pricing affect each page.
+
+5. Testing and walkthrough:
+• Simulate one full user journey: sign‑up, play a 15‑minute match with occasional feedback, see the recap, and start a new session.
+• Provide instructions on how this would be used at the Esports World Cup booth: netcafe‑style stations with the app pre‑installed; staff sign players in; the coach runs during their match; after the match, staff review the recap with the player; then reset for the next player.
+• Make sure the UI remains responsive during long sessions and that the AI advice remains relevant and context‑aware.
+
+6. Final remarks:
+Ensure the generated code is clean, commented and ready to be extended. The goal is a super‑intelligent, research‑grounded real‑time coach that helps players improve by at least 1% per session, while being reliable enough to demonstrate at a major esports event.

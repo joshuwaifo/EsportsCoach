@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(142, 76%, 36%);
+  --primary-foreground: hsl(144, 61%, 20%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(142, 76%, 36%);
+  --radius: 0.5rem;
+
+  /* Gaming-specific colors */
+  --gaming-dark: hsl(236, 22%, 11%);
+  --gaming-surface: hsl(236, 18%, 15%);
+  --gaming-blue: hsl(215, 64%, 19%);
+  --gaming-green: hsl(142, 76%, 36%);
+  --gaming-orange: hsl(18, 95%, 60%);
+  --gaming-muted: hsl(240, 5%, 72%);
+  --gaming-purple: hsl(258, 90%, 66%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(142, 76%, 36%);
+  --primary-foreground: hsl(144, 61%, 20%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(142, 76%, 36%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-gaming {
+    font-family: 'Rajdhani', sans-serif;
+  }
+  
+  .bg-gaming-dark {
+    background-color: var(--gaming-dark);
+  }
+  
+  .bg-gaming-surface {
+    background-color: var(--gaming-surface);
+  }
+  
+  .bg-gaming-blue {
+    background-color: var(--gaming-blue);
+  }
+  
+  .bg-gaming-green {
+    background-color: var(--gaming-green);
+  }
+  
+  .bg-gaming-orange {
+    background-color: var(--gaming-orange);
+  }
+  
+  .text-gaming-dark {
+    color: var(--gaming-dark);
+  }
+  
+  .text-gaming-muted {
+    color: var(--gaming-muted);
+  }
+  
+  .text-gaming-green {
+    color: var(--gaming-green);
+  }
+  
+  .text-gaming-orange {
+    color: var(--gaming-orange);
+  }
+  
+  .text-gaming-blue {
+    color: var(--gaming-blue);
+  }
+  
+  .text-gaming-purple {
+    color: var(--gaming-purple);
+  }
+  
+  .border-gaming-green {
+    border-color: var(--gaming-green);
+  }
+  
+  .border-gaming-blue {
+    border-color: var(--gaming-blue);
+  }
+  
+  .border-gaming-orange {
+    border-color: var(--gaming-orange);
+  }
+  
+  .border-gaming-purple {
+    border-color: var(--gaming-purple);
+  }
+  
+  .border-gaming-muted {
+    border-color: var(--gaming-muted);
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px var(--gaming-green);
+    }
+    to {
+      box-shadow: 0 0 20px var(--gaming-green), 0 0 30px var(--gaming-green);
+    }
+  }
+}
