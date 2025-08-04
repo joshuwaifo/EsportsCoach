@@ -277,25 +277,55 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
     </div>;
   }
 
+  // Game-specific background styles
+  const getGameBackground = () => {
+    switch (user.gameCategory) {
+      case 'moba':
+        return {
+          backgroundImage: "linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 50%, #14142b 100%)",
+          backgroundOverlay: "radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.1) 0%, transparent 70%)"
+        };
+      case 'fighting':
+        return {
+          backgroundImage: "linear-gradient(135deg, #2d1810 0%, #1a0e08 50%, #251612 100%)",
+          backgroundOverlay: "radial-gradient(circle at 50% 50%, rgba(255, 69, 0, 0.1) 0%, transparent 70%)"
+        };
+      case 'sport':
+        return {
+          backgroundImage: "linear-gradient(135deg, #0d2818 0%, #071a0f 50%, #122b1c 100%)",
+          backgroundOverlay: "radial-gradient(circle at 50% 50%, rgba(0, 255, 127, 0.1) 0%, transparent 70%)"
+        };
+      default:
+        return {
+          backgroundImage: "linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 50%, #141414 100%)",
+          backgroundOverlay: "none"
+        };
+    }
+  };
+
+  const gameStyle = getGameBackground();
+
   return (
-    <div className="min-h-screen relative">
-      {/* Simulated Game Background - EA FC Soccer Field */}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Game-specific Background */}
       <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080')"
-        }}
+        className="absolute inset-0"
+        style={{ backgroundImage: gameStyle.backgroundImage }}
       >
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div 
+          className="absolute inset-0" 
+          style={{ background: gameStyle.backgroundOverlay }}
+        />
+        <div className="absolute inset-0 bg-black/30"></div>
       </div>
 
-      {/* Gaming Overlay Interface */}
-      <div className={`relative z-10 h-screen flex transition-opacity duration-300 ${isOverlayVisible ? 'opacity-100' : 'opacity-30 hover:opacity-100'}`}>
-        {/* Left Panel - AI Coach Status */}
-        <div className="w-80 p-4 space-y-4">
-          {/* AI Coach Status with Bug Icon */}
-          <Card className="bg-gaming-surface/90 backdrop-blur-sm border-gaming-green/30">
-            <CardContent className="p-4">
+      {/* Gaming Overlay Interface - Minimal Design */}
+      <div className={`relative z-10 h-screen transition-opacity duration-300 ${isOverlayVisible ? 'opacity-100' : 'opacity-20 hover:opacity-100'}`}>
+        {/* Left Panel - Compact AI Coach Overlay */}
+        <div className="absolute top-4 left-4 w-72 space-y-3">
+          {/* AI Coach Status - Minimal Overlay Style */}
+          <Card className="bg-black/70 backdrop-blur-md border-gaming-green/20 shadow-2xl">
+            <CardContent className="p-3">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="relative">
                   <Bug className={`h-6 w-6 ${isAIActive ? 'text-gaming-green animate-pulse' : 'text-gaming-muted'}`} />
@@ -396,9 +426,9 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
             </CardContent>
           </Card>
 
-          {/* Chat Interface */}
-          <Card className="bg-gaming-surface/90 backdrop-blur-sm border-gaming-blue/30">
-            <CardContent className="p-4">
+          {/* Chat Interface - Compact */}
+          <Card className="bg-black/70 backdrop-blur-md border-gaming-blue/20 shadow-2xl">
+            <CardContent className="p-3">
               <div className="flex items-center space-x-2 mb-3">
                 <MessageSquare className="h-4 w-4 text-gaming-blue" />
                 <span className="font-gaming font-bold text-sm">ASK COACH</span>
@@ -475,24 +505,61 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
           </Card>
         </div>
 
-        {/* Center Area - Minimal Game Info */}
+        {/* Center Area - Game-specific Info */}
         <div className="flex-1 flex items-start justify-center pt-8">
-          <Card className="bg-gaming-surface/80 backdrop-blur-sm border-gaming-green/20">
-            <CardContent className="p-4">
+          {/* Top Center - Game Timer/Score */}
+          <Card className="bg-black/60 backdrop-blur-md border-gaming-green/20 shadow-xl">
+            <CardContent className="p-3">
               <div className="flex items-center space-x-6 text-gaming-green font-gaming font-bold">
-                <div className="text-center">
-                  <div className="text-2xl">2</div>
-                  <div className="text-xs text-gaming-muted">HOME</div>
-                </div>
-                <div className="text-4xl">-</div>
-                <div className="text-center">
-                  <div className="text-2xl">1</div>
-                  <div className="text-xs text-gaming-muted">AWAY</div>
-                </div>
-                <div className="text-center ml-8">
-                  <div className="text-xl">{formatTime(gameTime)}</div>
-                  <div className="text-xs text-gaming-muted">TIME</div>
-                </div>
+                {user.gameCategory === 'moba' && (
+                  <>
+                    <div className="text-center">
+                      <div className="text-xl">15</div>
+                      <div className="text-xs text-gaming-muted">KILLS</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl">{formatTime(gameTime)}</div>
+                      <div className="text-xs text-gaming-muted">GAME TIME</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl">8</div>
+                      <div className="text-xs text-gaming-muted">DEATHS</div>
+                    </div>
+                  </>
+                )}
+                {user.gameCategory === 'fighting' && (
+                  <>
+                    <div className="text-center">
+                      <div className="text-xl">P1</div>
+                      <div className="text-xs text-gaming-muted">●●○</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl">60</div>
+                      <div className="text-xs text-gaming-muted">TIMER</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl">P2</div>
+                      <div className="text-xs text-gaming-muted">●○○</div>
+                    </div>
+                  </>
+                )}
+                {user.gameCategory === 'sport' && (
+                  <>
+                    <div className="text-center">
+                      <div className="text-xl">2</div>
+                      <div className="text-xs text-gaming-muted">HOME</div>
+                    </div>
+                    <div className="text-xl">-</div>
+                    <div className="text-center">
+                      <div className="text-xl">1</div>
+                      <div className="text-xs text-gaming-muted">AWAY</div>
+                    </div>
+                    <div className="text-center ml-8">
+                      <div className="text-xl">{formatTime(gameTime)}</div>
+                      <div className="text-xs text-gaming-muted">TIME</div>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -501,8 +568,8 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
         {/* Right Panel - Controls */}
         <div className="w-64 p-4 flex flex-col justify-between">
           <div className="space-y-4">
-            {/* Game Controls */}
-            <Card className="bg-gaming-surface/90 backdrop-blur-sm border-gaming-purple/30">
+            {/* Game Controls - Minimal */}
+            <Card className="bg-black/70 backdrop-blur-md border-gaming-purple/20 shadow-2xl">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2 mb-3">
                   <Activity className="h-4 w-4 text-gaming-purple" />
@@ -528,8 +595,8 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
               </CardContent>
             </Card>
 
-            {/* Session Info */}
-            <Card className="bg-gaming-surface/90 backdrop-blur-sm border-gaming-muted/30">
+            {/* Session Info - Minimal */}
+            <Card className="bg-black/70 backdrop-blur-md border-gaming-muted/20 shadow-2xl">
               <CardContent className="p-4">
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between">
@@ -537,8 +604,8 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
                     <span className="font-medium">{formatTime(gameTime)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gaming-muted">Game Mode</span>
-                    <span className="font-medium capitalize">{user.gameCategory === 'moba' ? 'League of Legends' : user.gameCategory === 'fighting' ? 'Street Fighter 6' : 'EA FC'}</span>
+                    <span className="text-gaming-muted">Game</span>
+                    <span className="font-medium">{user.gameCategory === 'moba' ? 'League of Legends' : user.gameCategory === 'fighting' ? 'Street Fighter 6' : 'EA Sports FC 25'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gaming-muted">Coach Active</span>
