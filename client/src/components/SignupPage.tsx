@@ -119,7 +119,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
             Elevate Your Game
           </h1>
           <p className="text-xl text-gaming-muted mb-6 max-w-2xl mx-auto">
-            AI-powered live coaching for esports. Get real-time feedback, post-game analysis, and personalized training to dominate the competition.
+            AI-powered live coaching for esports. Get real-time feedback, post-game analysis, and personalised training to dominate the competition.
           </p>
         </div>
 
