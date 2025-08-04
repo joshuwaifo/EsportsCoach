@@ -17,7 +17,11 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Star
+  Star,
+  Upload,
+  FileVideo,
+  Pause,
+  SkipForward
 } from 'lucide-react';
 
 interface RecapPageProps {
@@ -39,6 +43,10 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
   const { user, currentSession, keyMoments, endSession } = useGame();
   const [analysis, setAnalysis] = useState<PostGameAnalysis | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedVideo, setUploadedVideo] = useState<string | null>(null);
+  const [sessionErrors, setSessionErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (currentSession && !currentSession.endTime) {
@@ -52,6 +60,10 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
       
       setIsLoadingAnalysis(true);
       try {
+        // Get session metrics and errors for enhanced analysis
+        const sessionData = await geminiService.endSession();
+        setSessionErrors(sessionData.errors || []);
+        
         const result = await geminiService.generatePostGameAnalysis(currentSession, keyMoments);
         setAnalysis(result);
       } catch (error) {
@@ -73,6 +85,50 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
 
     generateAnalysis();
   }, [currentSession, keyMoments]);
+
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('video/')) {
+      alert('Please select a video file');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      const videoUrl = await geminiService.uploadMatchVideo(file, (progress) => {
+        setUploadProgress(progress);
+      });
+      
+      setUploadedVideo(videoUrl);
+      
+      // Trigger new analysis with uploaded video
+      if (videoUrl) {
+        setIsLoadingAnalysis(true);
+        const result = await geminiService.generatePostGameAnalysis(
+          { ...currentSession, uploadedVideo: videoUrl }, 
+          keyMoments
+        );
+        setAnalysis(result);
+        setIsLoadingAnalysis(false);
+      }
+    } catch (error: any) {
+      alert(error.message || 'Upload failed. Please try again.');
+      console.error('Video upload error:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const resetForNextUser = () => {
+    // Reset all state for Esports World Cup booth usage
+    geminiService.resetForNextUser();
+    onContinue();
+  };
 
   if (!user || !currentSession) {
     return <div className="min-h-screen bg-gaming-dark flex items-center justify-center">
@@ -149,6 +205,13 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
               className="bg-gaming-green hover:bg-gaming-green/80 text-gaming-dark px-6 py-2 font-medium"
             >
               Continue Training
+            </Button>
+            <Button 
+              onClick={resetForNextUser}
+              variant="outline"
+              className="border-gaming-orange text-gaming-orange hover:bg-gaming-orange/10 px-6 py-2"
+            >
+              Next User (Booth)
             </Button>
           </div>
         </div>
@@ -229,6 +292,49 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
                       <option>2x</option>
                     </select>
                   </div>
+                </div>
+                
+                {/* Video Upload Section */}
+                <div className="mt-4 p-4 border border-gaming-muted/20 rounded-xl bg-gaming-dark/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-gaming font-bold text-sm">Upload Match Recording</h4>
+                    <FileVideo className="h-4 w-4 text-gaming-muted" />
+                  </div>
+                  <p className="text-xs text-gaming-muted mb-3">
+                    Upload your match video for enhanced AI analysis (Max: 1GB, supports MP4/MOV/AVI)
+                  </p>
+                  
+                  {isUploading ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gaming-green"></div>
+                        <span className="text-sm">Uploading... {uploadProgress.toFixed(0)}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="w-full" />
+                    </div>
+                  ) : uploadedVideo ? (
+                    <div className="flex items-center space-x-2 text-gaming-green">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-sm">Video uploaded successfully! Analysis updated.</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        className="hidden"
+                        id="video-upload"
+                      />
+                      <label
+                        htmlFor="video-upload"
+                        className="cursor-pointer flex items-center space-x-2 px-3 py-2 bg-gaming-blue hover:bg-gaming-blue/80 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <Upload className="h-4 w-4" />
+                        <span>Choose Video File</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -455,6 +561,30 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
                 )}
               </CardContent>
             </Card>
+
+            {/* AI Session Debugging (only visible if errors exist) */}
+            {sessionErrors.length > 0 && (
+              <Card className="bg-gaming-surface border-red-500/20">
+                <CardHeader>
+                  <CardTitle className="font-gaming text-red-400">AI System Debugging</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gaming-muted mb-3">
+                      Session errors detected (for Esports World Cup booth monitoring):
+                    </p>
+                    {sessionErrors.map((error, index) => (
+                      <div key={index} className="bg-red-900/30 border border-red-500/50 rounded p-2">
+                        <div className="flex items-center space-x-2">
+                          <AlertTriangle className="h-4 w-4 text-red-400" />
+                          <span className="text-sm text-red-300">{error}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>

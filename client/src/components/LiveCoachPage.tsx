@@ -15,7 +15,12 @@ import {
   BarChart3,
   Clock,
   Users,
-  Trophy
+  Trophy,
+  Bug,
+  AlertTriangle,
+  Volume2,
+  VolumeX,
+  MicOff
 } from 'lucide-react';
 
 interface LiveCoachPageProps {
@@ -29,6 +34,10 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
   const [isPaused, setIsPaused] = useState(false);
   const [gameTime, setGameTime] = useState(0);
   const [isMicActive, setIsMicActive] = useState(false);
+  const [isOverlayVisible, setIsOverlayVisible] = useState(true);
+  const [aiErrors, setAIErrors] = useState<string[]>([]);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [sessionMetrics, setSessionMetrics] = useState<any>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const aiMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -48,17 +57,29 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
     }
   }, [isPaused]);
 
-  // AI coaching simulation
+  // AI coaching simulation with error handling
   useEffect(() => {
     if (!isAIActive || isPaused || !currentSession) return;
 
     const interval = setInterval(async () => {
-      const advice = await geminiService.getCoachingAdvice("gameplay_situation", {
-        gameTime,
-        gameCategory: user?.gameCategory,
-        stats: currentSession.liveStats,
-      });
-      addAIMessage(advice);
+      try {
+        const advice = await geminiService.getCoachingAdvice("gameplay_situation", {
+          gameTime,
+          gameCategory: user?.gameCategory,
+          stats: currentSession.liveStats,
+          gameState: gameTime > 300 ? 'playing' : 'warmup' // Simulate game states
+        });
+        
+        // Update session metrics
+        const metrics = geminiService.getSessionMetrics();
+        setSessionMetrics(metrics);
+        
+        addAIMessage(advice);
+      } catch (error) {
+        const errorMsg = `AI coaching error at ${formatTime(gameTime)}: Failed to generate advice`;
+        setAIErrors(prev => [...prev.slice(-4), errorMsg]); // Keep last 5 errors
+        console.error("AI coaching error:", error);
+      }
     }, 8000 + Math.random() * 7000); // 8-15 second intervals
 
     return () => clearInterval(interval);
@@ -124,19 +145,52 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
     });
     
     setTimeout(() => {
-      addChatMessage(response, 'ai');
+      const responseText = typeof response === 'string' ? response : response.text;
+      addChatMessage(responseText, 'ai');
     }, 1000);
   };
 
-  const toggleMicrophone = () => {
-    setIsMicActive(!isMicActive);
-    // In a real implementation, this would handle microphone input
+  const toggleMicrophone = async () => {
     if (!isMicActive) {
-      // Simulate voice input
-      setTimeout(() => {
-        addChatMessage("Voice input: How should I approach this situation?", 'user');
+      setIsMicActive(true);
+      // Simulate starting voice recording
+      try {
+        // In real implementation, this would capture actual voice input
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Simulate voice-to-text conversion after 2 seconds
+        setTimeout(async () => {
+          const voiceQuestions = [
+            "How should I approach this situation?",
+            "What's my positioning like right now?", 
+            "Should I be more aggressive?",
+            "When should I engage the enemy team?",
+            "What items should I buy next?"
+          ];
+          
+          const question = voiceQuestions[Math.floor(Math.random() * voiceQuestions.length)];
+          addChatMessage(`🎤 Voice: ${question}`, 'user');
+          
+          // Get AI response with voice capability
+          const response = await geminiService.respondToChat(question, {
+            gameTime,
+            gameCategory: user?.gameCategory,
+            stats: currentSession?.liveStats,
+          });
+          
+          setTimeout(() => {
+            const responseText = typeof response === 'string' ? response : response.text;
+            addChatMessage(`🔊 ${responseText}`, 'ai');
+          }, 1000);
+          
+          setIsMicActive(false);
+        }, 2000);
+      } catch (error) {
+        setAIErrors(prev => [...prev, `Voice input failed: ${error}`]);
         setIsMicActive(false);
-      }, 2000);
+      }
+    } else {
+      setIsMicActive(false);
     }
   };
 
@@ -176,26 +230,72 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
       </div>
 
       {/* Gaming Overlay Interface */}
-      <div className="relative z-10 h-screen flex">
+      <div className={`relative z-10 h-screen flex transition-opacity duration-300 ${isOverlayVisible ? 'opacity-100' : 'opacity-30 hover:opacity-100'}`}>
         {/* Left Panel - AI Coach Status */}
         <div className="w-80 p-4 space-y-4">
-          {/* AI Status Indicator */}
+          {/* AI Coach Status with Bug Icon */}
           <Card className="bg-gaming-surface/90 backdrop-blur-sm border-gaming-green/30">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3 mb-3">
-                <div className={`w-3 h-3 rounded-full ${isAIActive ? 'bg-gaming-green animate-pulse' : 'bg-gaming-muted'}`}></div>
-                <span className="font-gaming font-bold text-sm">
-                  {isAIActive ? 'AI COACH ACTIVE' : 'AI COACH PAUSED'}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-auto p-1"
-                  onClick={() => setIsAIActive(!isAIActive)}
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
+                <div className="relative">
+                  <Bug className={`h-6 w-6 ${isAIActive ? 'text-gaming-green animate-pulse' : 'text-gaming-muted'}`} />
+                  <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${isAIActive ? 'bg-gaming-green animate-pulse' : 'bg-gaming-muted'}`}></div>
+                </div>
+                <div className="flex-1">
+                  <span className="font-gaming font-bold text-sm block">
+                    {isAIActive ? 'AI COACH ACTIVE' : 'AI COACH PAUSED'}
+                  </span>
+                  {sessionMetrics && (
+                    <span className="text-xs text-gaming-muted">
+                      Tokens: {sessionMetrics.tokenCount} | Cost: ${sessionMetrics.sessionCost?.toFixed(4)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-1"
+                    onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+                    title="Toggle voice feedback"
+                  >
+                    {isAudioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-1"
+                    onClick={() => setIsOverlayVisible(!isOverlayVisible)}
+                    title="Toggle overlay visibility"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-1"
+                    onClick={() => setIsAIActive(!isAIActive)}
+                    title="Toggle AI coaching"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+              
+              {/* Error Warnings */}
+              {aiErrors.length > 0 && (
+                <div className="mb-3 p-2 bg-red-900/30 border border-red-500/50 rounded">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <AlertTriangle className="h-4 w-4 text-red-400" />
+                    <span className="text-sm font-medium text-red-400">AI Coach Warnings</span>
+                  </div>
+                  <div className="text-xs text-red-300">
+                    {aiErrors.slice(-2).map((error, i) => (
+                      <div key={i}>{error}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div ref={aiMessagesRef} className="space-y-2 max-h-32 overflow-y-auto">
                 {currentSession.aiMessages.slice(-5).map((message, index) => (
                   <div key={index} className="text-sm bg-gaming-dark/50 rounded-lg p-2">
@@ -246,9 +346,14 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
                   size="sm"
                   variant="secondary"
                   onClick={toggleMicrophone}
-                  className={`${isMicActive ? 'bg-red-500 hover:bg-red-600' : 'bg-gaming-green hover:bg-gaming-green/80'}`}
+                  className={`${
+                    isMicActive 
+                      ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                      : 'bg-gaming-green hover:bg-gaming-green/80'
+                  } transition-all duration-200`}
+                  title={isMicActive ? "Recording... (Click to stop)" : "Voice input"}
                 >
-                  <Mic className="h-4 w-4" />
+                  {isMicActive ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </Button>
               </div>
             </CardContent>
