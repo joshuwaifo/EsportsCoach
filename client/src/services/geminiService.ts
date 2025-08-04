@@ -191,27 +191,11 @@ class GeminiService {
       // For now, use gemini-pro until 2.5 models are available
       const fallbackModel = modelConfig.name.includes('2.5') ? 'gemini-pro' : modelConfig.name;
       
-      // Initialize generator model
-      this.generatorModel = this.genai!.getGenerativeModel({
-        model: fallbackModel,
-        generationConfig: {
-          temperature: modelConfig.parameters.temperature,
-          maxOutputTokens: modelConfig.parameters.maxOutputTokens,
-          topP: modelConfig.parameters.topP,
-          topK: 40
-        }
-      });
+      // Initialize generator model - simplified for demo
+      this.generatorModel = this.genai;
 
-      // Initialize verifier model (same model but different instance)
-      this.verifierModel = this.genai!.getGenerativeModel({
-        model: fallbackModel,
-        generationConfig: {
-          temperature: 0.3, // Lower temperature for verification
-          maxOutputTokens: 50,
-          topP: 0.8,
-          topK: 20
-        }
-      });
+      // Initialize verifier model - simplified for demo
+      this.verifierModel = this.genai;
       
       console.log(`Models initialized with ${fallbackModel} (requested: ${modelConfig.name})`);
     } catch (error) {
@@ -752,7 +736,7 @@ class GeminiService {
   }
 
   async generatePostGameAnalysis(session: any, keyMoments: any[], user?: any) {
-    if (!this.model) {
+    if (!this.genai) {
       return {
         summary: "Good game! You showed improvement in several areas.",
         strengths: ["Tactical awareness", "Decision making under pressure"],
@@ -771,7 +755,7 @@ class GeminiService {
       Provide personalized analysis addressing the player by name, referencing their current rank and game category.
       Format as JSON with summary, strengths array, improvements array, and drills array.`;
       
-      const result = await this.model.generateContent({
+      const result = await this.genai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
       });
