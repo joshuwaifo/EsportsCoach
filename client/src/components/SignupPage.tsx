@@ -113,12 +113,12 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
       </nav>
 
       {/* Hero Section */}
-      <div className="relative z-10 px-6 py-6">
+      <div className="relative z-10 px-6 py-12">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-7xl font-gaming font-bold mb-4 bg-gradient-to-r from-gaming-green to-gaming-orange bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-7xl font-gaming font-bold mb-6 bg-gradient-to-r from-gaming-green to-gaming-orange bg-clip-text text-transparent">
             Elevate Your Game
           </h1>
-          <p className="text-xl text-gaming-muted mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-gaming-muted mb-12 max-w-2xl mx-auto">
             AI-powered live coaching for esports. Get real-time feedback, post-game analysis, and personalized training to dominate the competition.
           </p>
         </div>
