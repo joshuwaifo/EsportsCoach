@@ -41,6 +41,8 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
   const chatRef = useRef<HTMLDivElement>(null);
   const aiMessagesRef = useRef<HTMLDivElement>(null);
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL LOGIC OR EARLY RETURNS
+  
   useEffect(() => {
     if (user && !currentSession) {
       startSession(user.gameCategory);
@@ -76,7 +78,10 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
         
         addAIMessage(advice);
       } catch (error) {
-        const errorMsg = `AI coaching error at ${formatTime(gameTime)}: Failed to generate advice`;
+        const mins = Math.floor(gameTime / 60);
+        const secs = gameTime % 60;
+        const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+        const errorMsg = `AI coaching error at ${timeStr}: Failed to generate advice`;
         setAIErrors(prev => [...prev.slice(-4), errorMsg]); // Keep last 5 errors
         console.error("AI coaching error:", error);
       }
@@ -115,15 +120,28 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
 
       if (Math.random() < 0.3) { // 30% chance every interval
         const moment = moments[Math.floor(Math.random() * moments.length)];
+        const mins = Math.floor(gameTime / 60);
+        const secs = gameTime % 60;
+        const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
         addKeyMoment({
           ...moment,
-          timestamp: formatTime(gameTime),
+          timestamp: timeStr,
         });
       }
     }, 15000);
 
     return () => clearInterval(interval);
   }, [isPaused, gameTime, addKeyMoment, currentSession]);
+
+  // Scroll to bottom when new messages arrive - MOVED BEFORE EARLY RETURN
+  useEffect(() => {
+    if (aiMessagesRef.current) {
+      aiMessagesRef.current.scrollTop = aiMessagesRef.current.scrollHeight;
+    }
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, [currentSession?.aiMessages, currentSession?.chatHistory]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -206,16 +224,6 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
       </div>
     </div>;
   }
-
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (aiMessagesRef.current) {
-      aiMessagesRef.current.scrollTop = aiMessagesRef.current.scrollHeight;
-    }
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
-  }, [currentSession.aiMessages, currentSession.chatHistory]);
 
   return (
     <div className="min-h-screen relative">
