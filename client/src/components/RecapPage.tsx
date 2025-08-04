@@ -453,7 +453,7 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
                     </div>
                     
                     <div className="space-y-3 max-h-48 overflow-y-auto">
-                      {currentSession.aiMessages.slice(-6).map((message, index) => (
+                      {(currentSession?.aiMessages || []).slice(-6).map((message, index) => (
                         <div key={index} className="bg-gaming-dark/50 rounded-lg p-3">
                           <div className="flex items-start space-x-2">
                             <span className="text-xs text-gaming-green font-medium">[{message.timestamp}]</span>
