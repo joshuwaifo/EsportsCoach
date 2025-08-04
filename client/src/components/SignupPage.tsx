@@ -100,22 +100,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-gaming-dark via-gaming-surface to-gaming-blue relative">
       <div className="absolute inset-0 bg-black/20"></div>
       
-      {/* Navigation Header */}
-      <nav className="relative z-10 p-6">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gaming-green rounded-lg flex items-center justify-center">
-              <Gamepad2 className="text-gaming-dark text-xl" />
-            </div>
-            <span className="text-2xl font-gaming font-bold">Live Esports Coach</span>
-          </div>
-          <div className="hidden md:flex space-x-6">
-            <a href="#" className="text-gaming-muted hover:text-gaming-green transition-colors">Features</a>
-            <a href="#" className="text-gaming-muted hover:text-gaming-green transition-colors">Games</a>
-            <a href="#" className="text-gaming-muted hover:text-gaming-green transition-colors">Support</a>
-          </div>
-        </div>
-      </nav>
+      
 
       {/* Hero Section */}
       <div className="relative z-10 px-6 py-12">
