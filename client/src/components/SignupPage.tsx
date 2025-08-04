@@ -301,21 +301,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
                 </div>
               </div>
 
-              {/* Voice Settings */}
-              <div>
-                <Label htmlFor="voicePreference">AI Voice Preference</Label>
-                <Select onValueChange={(value) => form.setValue('voicePreference', value as any)}>
-                  <SelectTrigger className="bg-gaming-dark border-gaming-muted/30 focus:border-gaming-green">
-                    <SelectValue placeholder="Select voice preference" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Professional Coach">Professional Coach</SelectItem>
-                    <SelectItem value="Friendly Mentor">Friendly Mentor</SelectItem>
-                    <SelectItem value="Competitive Analyst">Competitive Analyst</SelectItem>
-                    <SelectItem value="Text Only">Text Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
               {/* Submit Button */}
               <Button
