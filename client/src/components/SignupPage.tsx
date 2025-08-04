@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useGame } from '@/contexts/GameContext';
 import { Gamepad2, Zap, Trophy, Users } from 'lucide-react';
 import { GameCategoryIcons } from './GameLogos';
+import hawkGGLogo from '@assets/hawk-gg-logo.png';
 
 interface SignupPageProps {
   onComplete: (trainingMode: string) => void;
@@ -104,10 +105,11 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
       <nav className="relative z-10 p-6">
         <div className="flex items-center max-w-7xl mx-auto">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gaming-green rounded-lg flex items-center justify-center">
-              <Gamepad2 className="text-gaming-dark text-xl" />
-            </div>
-            <span className="text-2xl font-gaming font-bold">Live Esports Coach</span>
+            <img 
+              src={hawkGGLogo} 
+              alt="Hawk GG" 
+              className="h-12 w-auto"
+            />
           </div>
         </div>
       </nav>
@@ -119,7 +121,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
             Elevate Your Game
           </h1>
           <p className="text-xl text-gaming-muted mb-6 max-w-2xl mx-auto">
-            AI-powered live coaching for esports. Get real-time feedback, post-game analysis, and personalised training to dominate the competition.
+            Hawk GG AI-powered live coaching for esports. Get real-time feedback, post-game analysis, and personalised training to dominate the competition.
           </p>
         </div>
 
