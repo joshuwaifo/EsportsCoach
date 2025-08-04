@@ -1,0 +1,40 @@
+Overview and goals:
+Build a ReactJS single‑page application that demonstrates a Live Esports Coach proof‑of‑concept. The app should allow users to sign up, select a game, choose between live or post‑game analysis, and then receive real‑time coaching via an unobtrusive overlay. After a game, the user should see a recap/dashboard page with insights, highlights, metrics and recommendations for improvement. The coach should support up to three games (League of Legends, EA FC and Street Fighter 6). This project is a proof of concept showing that multiple sessions lead to better results and collecting user feedback.
+
+1. Sign‑up page:
+• Create a form that collects name, age, gender, location, contact, in‑game name, in‑game stats and feedback.
+• Include a game selection (dropdown or radio buttons) with categories “MOBA”, “Fighting” and “Sport.”
+• Provide options to choose training mode (“Live analysis” or “Post game analysis”) and voice(s) for audio feedback.
+• When the user submits, store their information in component state (no backend needed for this demo) and transition to the next screen.
+
+2. Overlay / live coaching interface:
+• Use a layout inspired by the slides: overlay floats above the game window like a Discord/OBS overlay. You can simulate a game screen with a placeholder image (e.g., a screenshot of EA FC).
+• On the overlay, display an AI “bug” icon to show that the coach is active; next to it show live text responses from the AI. Allow the user to toggle prompts on/off; even when off, the AI continues monitoring silently.
+• Include a small chat box for the player to type questions to the AI coach. Also provide a microphone button to send spoken input. When the user pauses the game or toggles the overlay, they should be able to interact via text or speech.
+• Ensure that the overlay text is unobtrusive and does not cover important parts of the game (e.g., place it at the side or top).
+• Include a “End Game” button to simulate finishing the match and trigger the recap view.
+
+3. Live coaching logic using Gemini Live API:
+• Integrate the provided Gemini Live API code snippet. Wrap it in a useEffect hook so it starts when the user enters the live coaching view.
+• Use @google/genai to connect to the model models/gemini-2.0-flash-live-001 with audio output (Modality.AUDIO) and appropriate speechConfig.
+• Replace the placeholder INSERT_INPUT_HERE with data from the user’s text input or microphone (you can simulate microphone input with typed text for this demo).
+• Stream responses back to the user: if the response contains audio (base64), use the provided convertToWav helper to write audio.wav; if the response contains text, append it to the overlay chat.
+• Handle turn completion using handleTurn() and waitMessage() as shown in the snippet. Maintain a queue of messages to display in the overlay.
+
+4. Post‑game recap view:
+• After clicking “End Game”, show a dashboard summarising the match. Divide the screen into sections similar to the “Ideal user interface” slide:
+– Video replay / key moments: place a placeholder video panel with play/pause button and a list of goals or key points underneath.
+– AI analysis panel: show the AI chat log with timestamps indicating when the AI gave advice and whether the player followed it.
+– Ranking metrics: display simple stats comparing the player to others (you can hard‑code a few numbers or bars).
+– Tips & drills: provide a list of recommended strategies and drills.
+• Include a “Play Again” button that resets the app to the sign‑up state or a “Continue” button that retains learned data for the next game.
+
+5. Style and architecture:
+• Use functional components and hooks (useState, useEffect). Organise the app into SignupPage, LiveCoachPage and RecapPage components.
+• Keep the design clean and similar to the slides: white or dark background with accent colours; simple icons; avoid clutter.
+• Provide comments explaining each major section and note that in a real implementation you would connect to actual game APIs and a backend to store user data.
+
+6. Final touches:
+• Ensure the overlay and recap dashboards can scale to different resolutions.
+• Simulate user improvements by keeping session data in a context or global state (e.g., using React Context API).
+• Optionally include a way to choose between voice and text output in the Gemini config.
