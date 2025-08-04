@@ -89,7 +89,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ **REAL-TIME ANALYSIS**: Implemented live screen capture with Gemini Vision API for actual gameplay analysis
 - ✅ Added dynamic game detection and adaptive coaching based on live screen sharing
 - ✅ Enhanced UI with real-time analysis controls and live coaching status indicators
-- ✅ **UPDATED GAME LOGOS**: Integrated authentic 2025 versions - League of Legends (official current text-based logo with gold gradient), Street Fighter 6 (Year 3 hexagonal logo), EA Sports FC 25 (latest edition)
+- ✅ **UPDATED GAME LOGOS**: Integrated authentic 2025 versions - League of Legends (current 2019+ design), Street Fighter 6 (Year 3 hexagonal logo), EA Sports FC 25 (latest edition)
 
 ## Booth Demo Readiness
 The application is now fully prepared for Esports World Cup demonstrations with:

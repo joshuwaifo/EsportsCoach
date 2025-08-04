@@ -230,7 +230,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
                       >
                         <div className="text-center">
                           {/* Use authentic game logo */}
-                          {category.id === 'moba' && <GameCategoryIcons.moba className="w-20 h-12 mx-auto mb-4" />}
+                          {category.id === 'moba' && <GameCategoryIcons.moba className="w-16 h-16 mx-auto mb-4" />}
                           {category.id === 'fighting' && <GameCategoryIcons.fighting className="w-16 h-16 mx-auto mb-4" />}
                           {category.id === 'sport' && <GameCategoryIcons.sport className="w-16 h-16 mx-auto mb-4" />}
                           
