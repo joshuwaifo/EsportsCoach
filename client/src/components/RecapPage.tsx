@@ -64,14 +64,22 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
         const sessionData = await geminiService.endSession();
         setSessionErrors(sessionData.errors || []);
         
-        const result = await geminiService.generatePostGameAnalysis(currentSession, keyMoments);
+        const result = await geminiService.generatePostGameAnalysis(currentSession, keyMoments, user);
         setAnalysis(result);
       } catch (error) {
         console.error('Failed to generate analysis:', error);
         setAnalysis({
-          summary: "Game session completed successfully. Your performance showed consistent improvement throughout the match.",
-          strengths: ["Tactical awareness", "Decision making under pressure", "Adaptation to coaching advice"],
-          improvements: ["Defensive positioning", "Communication timing", "Resource management"],
+          summary: `${user?.inGameName}, your ${user?.gameCategory.toUpperCase()} session showed strong performance at the ${user?.currentRank} level. Your ${user?.voicePreference} coaching style preference was well-suited to this match type.`,
+          strengths: [
+            `${user?.gameCategory === 'moba' ? 'Lane control and map awareness' : user?.gameCategory === 'fighting' ? 'Combo execution and frame timing' : 'Ball control and positioning'}`,
+            "Quick adaptation to real-time coaching advice",
+            `Strong decision-making during ${user?.gameCategory === 'moba' ? 'teamfights' : user?.gameCategory === 'fighting' ? 'neutral game' : 'offensive plays'}`
+          ],
+          improvements: [
+            `${user?.gameCategory === 'moba' ? 'Ward placement and vision control' : user?.gameCategory === 'fighting' ? 'Defense and blocking' : 'Defensive transitions'}`,
+            `Better positioning for ${user?.gameCategory === 'moba' ? 'late game' : user?.gameCategory === 'fighting' ? 'counter-attacks' : 'set pieces'}`,
+            "More consistent execution of coached strategies"
+          ],
           drills: [
             { name: "Positioning Practice", description: "Work on maintaining optimal positioning during team fights" },
             { name: "Reaction Training", description: "Improve response time to enemy movements and threats" },
@@ -185,11 +193,10 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
               <BarChart3 className="text-gaming-dark text-xl" />
             </div>
             <div>
-              <h1 className="text-2xl font-gaming font-bold">Game Analysis</h1>
+              <h1 className="text-2xl font-gaming font-bold">Great session, {user?.inGameName}!</h1>
               <p className="text-gaming-muted text-sm">
-                {getGameDisplayName(currentSession.gameCategory)} - 
-                {currentSession.duration ? ` ${formatDuration(currentSession.duration)} -` : ''} 
-                Session Complete
+                {getGameDisplayName(currentSession.gameCategory)} • {user?.currentRank} • {user?.trainingMode === 'post' ? 'Post-Game Analysis' : 'Live Coaching'} •
+                {currentSession.duration ? ` ${formatDuration(currentSession.duration)}` : ''} 
               </p>
             </div>
           </div>

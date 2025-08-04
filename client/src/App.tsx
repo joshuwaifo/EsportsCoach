@@ -10,11 +10,17 @@ import LiveCoachPage from "./components/LiveCoachPage";
 import RecapPage from "./components/RecapPage";
 import NotFound from "@/pages/not-found";
 
+
 function App() {
   const [currentView, setCurrentView] = useState<'signup' | 'live' | 'recap'>('signup');
 
-  const handleSignupComplete = () => {
-    setCurrentView('live');
+  const handleSignupComplete = (trainingMode: string) => {
+    // Route based on training mode selection
+    if (trainingMode === 'post') {
+      setCurrentView('recap');
+    } else {
+      setCurrentView('live');
+    }
   };
 
   const handleEndGame = () => {

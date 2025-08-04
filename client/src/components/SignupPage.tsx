@@ -12,7 +12,7 @@ import { Gamepad2, Zap, Trophy, Users } from 'lucide-react';
 import { GameCategoryIcons } from './GameLogos';
 
 interface SignupPageProps {
-  onComplete: () => void;
+  onComplete: (trainingMode: string) => void;
 }
 
 export default function SignupPage({ onComplete }: SignupPageProps) {
@@ -38,7 +38,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
 
   const onSubmit = (data: UserProfile) => {
     setUser(data);
-    onComplete();
+    onComplete(data.trainingMode);
   };
 
   const gameCategories = [

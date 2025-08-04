@@ -751,7 +751,7 @@ class GeminiService {
     console.log("Service reset for next user");
   }
 
-  async generatePostGameAnalysis(session: any, keyMoments: any[]) {
+  async generatePostGameAnalysis(session: any, keyMoments: any[], user?: any) {
     if (!this.model) {
       return {
         summary: "Good game! You showed improvement in several areas.",
@@ -765,9 +765,10 @@ class GeminiService {
     }
 
     try {
-      const prompt = `Analyze this gaming session: ${JSON.stringify(session)}. 
+      const userContext = user ? `Player: ${user.inGameName}, Rank: ${user.currentRank}, Game: ${user.gameCategory}, Training: ${user.trainingMode}, Location: ${user.location}` : '';
+      const prompt = `Analyze this gaming session for ${userContext}: ${JSON.stringify(session)}. 
       Key moments: ${JSON.stringify(keyMoments)}. 
-      Provide detailed analysis with strengths, improvements needed, and recommended drills.
+      Provide personalized analysis addressing the player by name, referencing their current rank and game category.
       Format as JSON with summary, strengths array, improvements array, and drills array.`;
       
       const result = await this.model.generateContent({
