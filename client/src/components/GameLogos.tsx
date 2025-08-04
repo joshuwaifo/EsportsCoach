@@ -1,26 +1,55 @@
 import React from 'react';
 
-// League of Legends 2025 Logo (Current Design since 2019)
+// League of Legends 2025 Logo (Current Official Design)
 export const LeagueOfLegendsLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
   <svg 
-    viewBox="0 0 120 120" 
+    viewBox="0 0 200 80" 
     className={className}
     xmlns="http://www.w3.org/2000/svg"
   >
-    {/* Modern minimalist League logo - rectangular stacked format */}
-    <rect x="10" y="20" width="100" height="20" fill="#C89B3C" rx="2"/>
-    <text x="60" y="35" fontSize="12" fill="#0A1428" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold">
+    {/* Background with subtle gradient */}
+    <defs>
+      <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#F0E6D2" />
+        <stop offset="50%" stopColor="#C8AA6E" />
+        <stop offset="100%" stopColor="#C89B3C" />
+      </linearGradient>
+    </defs>
+    
+    {/* LEAGUE OF text */}
+    <text 
+      x="100" 
+      y="25" 
+      fontSize="16" 
+      fill="url(#goldGradient)" 
+      textAnchor="middle" 
+      fontFamily="Arial, sans-serif" 
+      fontWeight="bold"
+      letterSpacing="2px"
+    >
       LEAGUE OF
     </text>
     
-    <rect x="10" y="45" width="100" height="20" fill="#C89B3C" rx="2"/>
-    <text x="60" y="60" fontSize="12" fill="#0A1428" textAnchor="middle" fontFamily="Arial, sans-serif" fontWeight="bold">
+    {/* LEGENDS text - larger and more prominent */}
+    <text 
+      x="100" 
+      y="50" 
+      fontSize="20" 
+      fill="url(#goldGradient)" 
+      textAnchor="middle" 
+      fontFamily="Arial, sans-serif" 
+      fontWeight="bold"
+      letterSpacing="2px"
+    >
       LEGENDS
     </text>
     
-    {/* Accent elements */}
-    <circle cx="60" cy="80" r="15" fill="none" stroke="#C89B3C" strokeWidth="2"/>
-    <polygon points="60,70 65,80 60,90 55,80" fill="#C89B3C"/>
+    {/* Decorative elements inspired by the game's aesthetic */}
+    <circle cx="20" cy="40" r="3" fill="#C89B3C" opacity="0.8"/>
+    <circle cx="180" cy="40" r="3" fill="#C89B3C" opacity="0.8"/>
+    
+    {/* Subtle underline */}
+    <rect x="30" y="60" width="140" height="2" fill="#C89B3C" opacity="0.6" rx="1"/>
   </svg>
 );
 
