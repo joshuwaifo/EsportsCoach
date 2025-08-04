@@ -35,9 +35,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       aiMessages: [],
       chatHistory: [],
       liveStats: {
-        accuracy: 0,
-        apm: 0,
-        score: 0,
+        accuracy: 50, // Start at baseline 50%
+        apm: 60, // Average APM baseline
+        score: 0, // Score starts at 0
       },
     };
     

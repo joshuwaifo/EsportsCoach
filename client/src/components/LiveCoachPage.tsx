@@ -119,21 +119,13 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
     return () => clearInterval(interval);
   }, [isAIActive, isPaused, gameTime, currentSession, addAIMessage, user]);
 
-  // Live stats simulation
+  // Live stats from screen capture analysis
   useEffect(() => {
-    if (isPaused || !currentSession) return;
-
-    const interval = setInterval(() => {
-      const newStats = {
-        accuracy: Math.max(0, Math.min(100, currentSession.liveStats.accuracy + (Math.random() - 0.5) * 10)),
-        apm: Math.max(0, currentSession.liveStats.apm + (Math.random() - 0.5) * 20),
-        score: currentSession.liveStats.score + Math.floor(Math.random() * 100),
-      };
-      updateLiveStats(newStats);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isPaused, currentSession, updateLiveStats]);
+    if (isPaused || !currentSession || !isScreenCaptureActive) return;
+    
+    // Stats will be updated by Gemini's real-time analysis when screen capture is active
+    // No simulated updates when using real gameplay analysis
+  }, [isPaused, currentSession, isScreenCaptureActive]);
 
   // Key moments simulation
   useEffect(() => {
@@ -474,8 +466,9 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
             </CardContent>
           </Card>
 
-          {/* Performance Metrics */}
-          <Card className="bg-gaming-surface/90 backdrop-blur-sm border-gaming-orange/30">
+          {/* Live Stats - Only show when screen capture is active */}
+          {isScreenCaptureActive && (
+            <Card className="bg-black/70 backdrop-blur-md border-gaming-orange/20 shadow-2xl">
             <CardContent className="p-4">
               <div className="flex items-center space-x-2 mb-3">
                 <BarChart3 className="h-4 w-4 text-gaming-orange" />
@@ -503,73 +496,30 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
 
-        {/* Center Area - Game-specific Info */}
+        {/* Center Area - Minimal Timer Display */}
         <div className="flex-1 flex items-start justify-center pt-8">
-          {/* Top Center - Game Timer/Score */}
+          {/* Simple Game Timer */}
           <Card className="bg-black/60 backdrop-blur-md border-gaming-green/20 shadow-xl">
             <CardContent className="p-3">
-              <div className="flex items-center space-x-6 text-gaming-green font-gaming font-bold">
-                {user.gameCategory === 'moba' && (
-                  <>
-                    <div className="text-center">
-                      <div className="text-xl">15</div>
-                      <div className="text-xs text-gaming-muted">KILLS</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xl">{formatTime(gameTime)}</div>
-                      <div className="text-xs text-gaming-muted">GAME TIME</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xl">8</div>
-                      <div className="text-xs text-gaming-muted">DEATHS</div>
-                    </div>
-                  </>
-                )}
-                {user.gameCategory === 'fighting' && (
-                  <>
-                    <div className="text-center">
-                      <div className="text-xl">P1</div>
-                      <div className="text-xs text-gaming-muted">●●○</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xl">60</div>
-                      <div className="text-xs text-gaming-muted">TIMER</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xl">P2</div>
-                      <div className="text-xs text-gaming-muted">●○○</div>
-                    </div>
-                  </>
-                )}
-                {user.gameCategory === 'sport' && (
-                  <>
-                    <div className="text-center">
-                      <div className="text-xl">2</div>
-                      <div className="text-xs text-gaming-muted">HOME</div>
-                    </div>
-                    <div className="text-xl">-</div>
-                    <div className="text-center">
-                      <div className="text-xl">1</div>
-                      <div className="text-xs text-gaming-muted">AWAY</div>
-                    </div>
-                    <div className="text-center ml-8">
-                      <div className="text-xl">{formatTime(gameTime)}</div>
-                      <div className="text-xs text-gaming-muted">TIME</div>
-                    </div>
-                  </>
-                )}
+              <div className="text-center">
+                <div className="text-2xl font-gaming font-bold text-gaming-green">{formatTime(gameTime)}</div>
+                <div className="text-xs text-gaming-muted uppercase">
+                  {user.gameCategory === 'moba' ? 'Match Time' : 
+                   user.gameCategory === 'fighting' ? 'Round Time' : 
+                   'Game Time'}
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Right Panel - Controls */}
-        <div className="w-64 p-4 flex flex-col justify-between">
-          <div className="space-y-4">
-            {/* Game Controls - Minimal */}
-            <Card className="bg-black/70 backdrop-blur-md border-gaming-purple/20 shadow-2xl">
+        <div className="absolute top-4 right-4 w-64 space-y-4">
+          {/* Game Controls - Minimal */}
+          <Card className="bg-black/70 backdrop-blur-md border-gaming-purple/20 shadow-2xl">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2 mb-3">
                   <Activity className="h-4 w-4 text-gaming-purple" />
@@ -616,7 +566,6 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
                 </div>
               </CardContent>
             </Card>
-          </div>
 
           {/* End Game Button */}
           <Button
