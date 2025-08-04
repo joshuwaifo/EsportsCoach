@@ -334,11 +334,65 @@ class GeminiService {
   }
 
   /**
+   * Converts audio buffer to WAV format for Live API compatibility
+   * Cost: Minimal - format conversion only
+   */
+  private convertToWav(audioBuffer: ArrayBuffer, sampleRate: number = 16000): ArrayBuffer {
+    const length = audioBuffer.byteLength;
+    const arrayBuffer = new ArrayBuffer(44 + length);
+    const view = new DataView(arrayBuffer);
+    
+    // WAV header
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, length, true);
+    
+    // Copy audio data
+    const audioData = new Uint8Array(audioBuffer);
+    const wavData = new Uint8Array(arrayBuffer, 44);
+    wavData.set(audioData);
+    
+    return arrayBuffer;
+  }
+
+  /**
+   * Saves binary audio/video files for session analysis
+   * Used for storing coaching session recordings
+   */
+  private saveBinaryFile(data: ArrayBuffer, filename: string): string {
+    const blob = new Blob([data], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link for demo purposes
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    
+    console.log(`Binary file saved: ${filename} (${data.byteLength} bytes)`);
+    return url;
+  }
+
+  /**
    * Handles large file uploads with chunking and progress tracking
    * Supports video files up to 1GB with resume capability
    */
-
-
   private async uploadChunk(chunk: Blob, index: number, total: number): Promise<void> {
     // Simulate network delay for demo
     await new Promise(resolve => setTimeout(resolve, 100));

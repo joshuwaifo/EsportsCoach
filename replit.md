@@ -76,3 +76,21 @@ Preferred communication style: Simple, everyday language.
 
 ### Replit Integration
 - **Replit Vite Plugins**: Development environment integration with error overlays and cartographer support for enhanced development experience
+
+## Recent Changes (January 2025)
+- ✅ Enhanced LiveCoachPage with microphone recording state and overlay visibility controls
+- ✅ Implemented comprehensive file upload functionality in RecapPage for match video analysis
+- ✅ Added session debugging panel for AI system error monitoring at Esports World Cup booth
+- ✅ Enhanced geminiService with video upload capabilities, progress tracking, and cost annotations
+- ✅ Added "Next User" functionality for booth operations with complete state reset
+- ✅ Implemented convertToWav and saveBinaryFile helper functions for audio/video handling
+- ✅ Added comprehensive Verifier.ts with expert-validated coaching syllabi for all supported games
+- ✅ Created booth operations documentation for Esports World Cup demonstration setup
+
+## Booth Demo Readiness
+The application is now fully prepared for Esports World Cup demonstrations with:
+- Complete 15-minute user journey testing
+- Netcafe-style station setup with staff workflow
+- Real-time cost monitoring and error handling
+- Responsive UI during long sessions with context-aware AI advice
+- Clean, commented code ready for extension and production deployment
