@@ -85,7 +85,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
       description: 'Real-time coaching during gameplay',
       icon: Zap,
       color: 'from-green-500/20 to-green-600/20',
-      borderColor: 'border-green-500/50',
+      borderColor: 'border-gaming-muted/50',
     },
     {
       id: 'post',
@@ -93,7 +93,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
       description: 'Detailed breakdown after matches',
       icon: Trophy,
       color: 'from-blue-500/20 to-blue-600/20',
-      borderColor: 'border-blue-500/50',
+      borderColor: 'border-gaming-muted/50',
     },
   ];
 
@@ -283,7 +283,7 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
                         className={`cursor-pointer relative p-6 rounded-xl border-2 transition-all ${
                           selectedMode === mode.id
                             ? 'border-gaming-green bg-gaming-green/20'
-                            : `${mode.borderColor} hover:border-gaming-green hover:bg-gaming-green/10`
+                            : 'border-gaming-muted/50 hover:border-gaming-muted hover:bg-gaming-muted/10'
                         }`}
                         onClick={() => {
                           setSelectedMode(mode.id);
