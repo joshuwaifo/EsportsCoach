@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { useGame } from '@/contexts/GameContext';
 import { Gamepad2, Zap, Trophy, Users } from 'lucide-react';
+import { GameCategoryIcons } from './GameLogos';
 
 interface SignupPageProps {
   onComplete: () => void;
@@ -44,29 +45,35 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
     {
       id: 'moba',
       name: 'MOBA',
-      description: 'League of Legends',
+      description: 'League of Legends (2025)',
       icon: Users,
       color: 'from-blue-500 to-blue-600',
       borderColor: 'border-blue-500/50',
       hoverColor: 'hover:border-green-500 hover:bg-green-500/10',
+      gameTitle: 'League of Legends',
+      developer: 'Riot Games'
     },
     {
       id: 'fighting',
       name: 'Fighting',
-      description: 'Street Fighter 6',
+      description: 'Street Fighter 6 (Year 3)',
       icon: Zap,
       color: 'from-orange-500 to-orange-600',
       borderColor: 'border-orange-500/50',
       hoverColor: 'hover:border-green-500 hover:bg-green-500/10',
+      gameTitle: 'Street Fighter 6',
+      developer: 'Capcom'
     },
     {
       id: 'sport',
       name: 'Sport',
-      description: 'EA FC',
+      description: 'EA Sports FC 25',
       icon: Trophy,
       color: 'from-purple-500 to-purple-600',
       borderColor: 'border-purple-500/50',
       hoverColor: 'hover:border-green-500 hover:bg-green-500/10',
+      gameTitle: 'EA Sports FC 25',
+      developer: 'EA Sports'
     },
   ];
 
@@ -222,9 +229,16 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
                         }}
                       >
                         <div className="text-center">
-                          <Icon className="w-8 h-8 mx-auto mb-4 text-gaming-green" />
+                          {/* Use authentic game logo */}
+                          {category.id === 'moba' && <GameCategoryIcons.moba className="w-16 h-16 mx-auto mb-4" />}
+                          {category.id === 'fighting' && <GameCategoryIcons.fighting className="w-16 h-16 mx-auto mb-4" />}
+                          {category.id === 'sport' && <GameCategoryIcons.sport className="w-16 h-16 mx-auto mb-4" />}
+                          
                           <h3 className="font-gaming font-bold text-xl mb-2">{category.name}</h3>
                           <p className="text-sm text-gaming-muted">{category.description}</p>
+                          {category.developer && (
+                            <p className="text-xs text-gaming-muted/70 mt-1">{category.developer}</p>
+                          )}
                         </div>
                       </div>
                     );
