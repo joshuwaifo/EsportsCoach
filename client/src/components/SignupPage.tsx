@@ -153,9 +153,32 @@ export default function SignupPage({ onComplete }: SignupPageProps) {
                   <Input
                     id="age"
                     type="number"
-                    {...form.register('age', { valueAsNumber: true })}
+                    min="13"
+                    max="120"
+                    {...form.register('age', { 
+                      valueAsNumber: true,
+                      validate: (value) => {
+                        if (isNaN(value) || value < 13 || value > 120) {
+                          return "Age must be a number between 13 and 120";
+                        }
+                        return true;
+                      }
+                    })}
                     placeholder="18"
                     className="bg-gaming-dark border-gaming-muted/30 focus:border-gaming-green"
+                    onKeyPress={(e) => {
+                      // Only allow numbers and basic navigation keys
+                      if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      // Prevent pasting non-numeric content
+                      const paste = e.clipboardData?.getData('text');
+                      if (paste && !/^\d+$/.test(paste)) {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                   {form.formState.errors.age && (
                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.age.message}</p>
