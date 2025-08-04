@@ -38,6 +38,7 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
   const [aiErrors, setAIErrors] = useState<string[]>([]);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [sessionMetrics, setSessionMetrics] = useState<any>(null);
+  const [isScreenCaptureActive, setIsScreenCaptureActive] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
   const aiMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -48,6 +49,34 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
       startSession(user.gameCategory);
     }
   }, [user, currentSession, startSession]);
+
+  // Initialize real-time screen capture and analysis
+  useEffect(() => {
+    if (currentSession && user) {
+      // Set up real-time advice callback
+      geminiService.onRealTimeAdvice = (advice: string, urgency: string) => {
+        addAIMessage(`🔴 LIVE: ${advice}`);
+        
+        // Show urgent advice in overlay
+        if (urgency === 'high') {
+          addKeyMoment({
+            type: 'achievement' as const,
+            title: 'Critical Coaching',
+            description: advice,
+            timestamp: formatTime(gameTime),
+          });
+        }
+      };
+
+      // Note: Screen capture will be manually triggered by user for real gameplay analysis
+
+      // Cleanup on unmount
+      return () => {
+        geminiService.stopScreenCapture();
+        geminiService.onRealTimeAdvice = null;
+      };
+    }
+  }, [currentSession, user, addAIMessage, addKeyMoment, gameTime]);
 
   // Game timer
   useEffect(() => {
@@ -212,7 +241,30 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
     }
   };
 
+  const startScreenCapture = async () => {
+    try {
+      const stream = await geminiService.startScreenCapture();
+      if (stream) {
+        setIsScreenCaptureActive(true);
+        console.log("Real-time screen analysis started for game:", user?.gameCategory);
+        addAIMessage("🔴 LIVE ANALYSIS: Screen capture started. I'm now analyzing your actual gameplay!");
+      }
+    } catch (error) {
+      console.error("Failed to start screen capture:", error);
+      setAIErrors(prev => [...prev, "Screen capture failed - using simulated mode"]);
+    }
+  };
+
+  const stopScreenCapture = async () => {
+    await geminiService.stopScreenCapture();
+    setIsScreenCaptureActive(false);
+    addAIMessage("⏹️ Screen analysis stopped. Switching to simulated coaching mode.");
+  };
+
   const handleEndGame = () => {
+    if (isScreenCaptureActive) {
+      stopScreenCapture();
+    }
     onEndGame();
   };
 
@@ -247,11 +299,11 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
               <div className="flex items-center space-x-3 mb-3">
                 <div className="relative">
                   <Bug className={`h-6 w-6 ${isAIActive ? 'text-gaming-green animate-pulse' : 'text-gaming-muted'}`} />
-                  <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${isAIActive ? 'bg-gaming-green animate-pulse' : 'bg-gaming-muted'}`}></div>
+                  <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${isScreenCaptureActive ? 'bg-red-500 animate-pulse' : isAIActive ? 'bg-gaming-green animate-pulse' : 'bg-gaming-muted'}`}></div>
                 </div>
                 <div className="flex-1">
                   <span className="font-gaming font-bold text-sm block">
-                    {isAIActive ? 'AI COACH ACTIVE' : 'AI COACH PAUSED'}
+                    {isScreenCaptureActive ? 'LIVE ANALYSIS ACTIVE' : isAIActive ? 'AI COACH ACTIVE' : 'AI COACH PAUSED'}
                   </span>
                   {sessionMetrics && (
                     <span className="text-xs text-gaming-muted">
@@ -290,6 +342,31 @@ export default function LiveCoachPage({ onEndGame }: LiveCoachPageProps) {
                 </div>
               </div>
               
+              {/* Screen Capture Controls */}
+              <div className="mb-3 flex space-x-2">
+                <Button
+                  variant={isScreenCaptureActive ? "destructive" : "default"}
+                  size="sm"
+                  onClick={isScreenCaptureActive ? stopScreenCapture : startScreenCapture}
+                  className="flex-1"
+                >
+                  {isScreenCaptureActive ? (
+                    <>⏹️ Stop Live Analysis</>
+                  ) : (
+                    <>🔴 Start Live Analysis</>
+                  )}
+                </Button>
+              </div>
+
+              {/* Status Message */}
+              <div className="mb-3 p-2 bg-gaming-dark/50 rounded text-xs">
+                {isScreenCaptureActive ? (
+                  <span className="text-red-400">🔴 Analyzing your actual gameplay in real-time</span>
+                ) : (
+                  <span className="text-gaming-muted">Click "Start Live Analysis" to enable real-time screen capture and AI coaching</span>
+                )}
+              </div>
+
               {/* Error Warnings */}
               {aiErrors.length > 0 && (
                 <div className="mb-3 p-2 bg-red-900/30 border border-red-500/50 rounded">

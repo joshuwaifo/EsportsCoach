@@ -22,13 +22,17 @@ This Live Esports Coach application is designed for demonstration at esports eve
 
 ### 2. Live Coaching Session (15 minutes)
 1. Application automatically launches LiveCoachPage
-2. Player starts their match in selected game
-3. AI coach provides real-time feedback via:
-   - On-screen overlay messages
+2. **Staff clicks "Start Live Analysis" button** to enable real-time screen capture
+3. Player starts their match in selected game (any game - AI will auto-detect)
+4. AI coach analyzes actual gameplay and provides real-time feedback via:
+   - Dynamic game detection and situation analysis
+   - On-screen overlay messages based on live gameplay
+   - Adaptive coaching for any esports title
    - Voice coaching (if enabled)
    - Chat interface for questions
-4. Staff can monitor:
-   - AI response quality
+5. Staff can monitor:
+   - Real-time analysis status (red indicator when active)
+   - AI response quality and game detection accuracy
    - Session metrics and costs
    - Error alerts in debugging panel
 

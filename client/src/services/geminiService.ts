@@ -36,6 +36,7 @@ class GeminiService {
   private maxReconnectAttempts = 3;
   private videoStream: MediaStream | null = null;
   private audioContext: AudioContext | null = null;
+  private analysisInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     if (API_KEY) {
@@ -198,9 +199,167 @@ class GeminiService {
     console.log(`Session metrics: ${this.sessionMetrics.tokenCount} tokens, $${this.sessionMetrics.sessionCost.toFixed(4)} cost`);
   }
 
+  // Real-time screen capture and analysis
+  async startScreenCapture(): Promise<MediaStream | null> {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          width: 1920,
+          height: 1080,
+          frameRate: 15 // Cost-optimized for Live API
+        },
+        audio: true
+      });
+      
+      this.videoStream = stream;
+      console.log("Screen capture started for real-time analysis");
+      
+      // Start continuous analysis of captured frames
+      this.startContinuousAnalysis();
+      return stream;
+    } catch (error) {
+      console.error("Failed to start screen capture:", error);
+      return null;
+    }
+  }
+
+  async stopScreenCapture() {
+    if (this.videoStream) {
+      this.videoStream.getTracks().forEach(track => track.stop());
+      this.videoStream = null;
+    }
+    
+    if (this.analysisInterval) {
+      clearInterval(this.analysisInterval);
+      this.analysisInterval = null;
+    }
+  }
+
+  // Capture frame from live video stream for analysis
+  private captureVideoFrame(): string | null {
+    if (!this.videoStream) return null;
+    
+    // Create video element for frame capture
+    const video = document.createElement('video');
+    video.srcObject = this.videoStream;
+    video.play();
+    
+    // Create canvas for frame capture
+    const canvas = document.createElement('canvas');
+    canvas.width = 1920;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx && video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, 1920, 1080);
+      return canvas.toDataURL('image/jpeg', 0.8);
+    }
+    
+    return null;
+  }
+
+  // Continuous analysis of screen capture for real-time coaching
+  private startContinuousAnalysis() {
+    // Analyze frames every 3 seconds to control API costs
+    const analysisInterval = setInterval(async () => {
+      const frameData = this.captureVideoFrame();
+      
+      if (frameData && this.genai) {
+        try {
+          // Send frame to Gemini for real-time game analysis
+          const analysisResult = await this.analyzeGameFrame(frameData);
+          
+          if (analysisResult && analysisResult.requiresCoaching) {
+            // Generate coaching advice based on actual game state
+            this.generateRealTimeAdvice(analysisResult);
+          }
+          
+          this.sessionMetrics.videoFramesSent++;
+          this.updateCostMetrics();
+        } catch (error) {
+          console.error("Frame analysis failed:", error);
+        }
+      }
+    }, 3000); // Analyze every 3 seconds
+    
+    // Store interval for cleanup
+    this.analysisInterval = analysisInterval;
+  }
+
+  // Analyze captured game frame with Gemini Vision
+  private async analyzeGameFrame(frameData: string): Promise<any> {
+    if (!this.genai) return null;
+    
+    try {
+      const response = await this.genai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                data: frameData.split(',')[1], // Remove data:image/jpeg;base64, prefix
+                mimeType: "image/jpeg"
+              }
+            },
+            {
+              text: `Analyze this live gameplay screenshot and determine:
+              1. What game is being played?
+              2. Current game situation and phase
+              3. Player positioning and actions
+              4. Immediate opportunities for improvement
+              5. Any critical mistakes or good plays
+              6. Does this require immediate coaching advice?
+              
+              Respond with JSON: {
+                "game": "detected_game",
+                "situation": "current_situation", 
+                "playerPosition": "position_analysis",
+                "opportunities": "improvement_suggestions",
+                "requiresCoaching": boolean,
+                "urgency": "low|medium|high",
+                "advice": "specific_coaching_advice"
+              }`
+            }
+          ]
+        }],
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const result = JSON.parse(response.text || '{}');
+      return result;
+    } catch (error) {
+      console.error("Frame analysis error:", error);
+      return null;
+    }
+  }
+
+  // Generate real-time coaching based on live analysis
+  private generateRealTimeAdvice(analysisResult: any) {
+    if (!analysisResult || !this.verifier) return;
+    
+    // Verify advice with expert coaching principles
+    const verifiedAdvice = this.verifier.verifyAdvice(analysisResult.advice, {
+      game: analysisResult.game,
+      situation: analysisResult.situation,
+      urgency: analysisResult.urgency
+    });
+    
+    if (verifiedAdvice.isValid) {
+      // Trigger coaching overlay with real-time advice
+      const advice = verifiedAdvice.modifiedAdvice || analysisResult.advice;
+      this.onRealTimeAdvice?.(advice, analysisResult.urgency);
+    }
+  }
+
+  // Callback for real-time advice (set by LiveCoachPage)
+  onRealTimeAdvice: ((advice: string, urgency: string) => void) | null = null;
+
   /**
    * Generates verified coaching advice with real-time context
-   * Implements cost control by limiting video analysis to active gameplay
+   * Now uses actual screen analysis instead of simulated data
    */
   async getCoachingAdvice(situation: string, gameContext: any) {
     const timestamp = Date.now();
