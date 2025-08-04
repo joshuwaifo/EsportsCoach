@@ -40,7 +40,7 @@ interface PostGameAnalysis {
 }
 
 export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
-  const { user, currentSession, keyMoments, endSession } = useGame();
+  const { user, currentSession, keyMoments, endSession, sessionHistory } = useGame();
   const [analysis, setAnalysis] = useState<PostGameAnalysis | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -499,13 +499,21 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
                     {/* Overall Score */}
                     <div className="text-center mb-6">
                       <div className="text-4xl font-gaming font-bold text-gaming-green mb-2">
-                        {currentSession?.finalStats?.overallScore || 85}/100
+                        {currentSession?.finalStats?.overallScore}/100
                       </div>
                       <p className="text-gaming-muted">Overall Performance</p>
-                      <div className="text-sm text-gaming-green">
-                        <TrendingUp className="inline h-3 w-3 mr-1" />
-                        +12% vs Last Game
-                      </div>
+                      {sessionHistory.length > 1 && (
+                        <div className="text-sm text-gaming-green">
+                          <TrendingUp className="inline h-3 w-3 mr-1" />
+                          {(() => {
+                            const prevSession = sessionHistory[sessionHistory.length - 2];
+                            const improvement = prevSession?.finalStats?.overallScore 
+                              ? currentSession.finalStats.overallScore - prevSession.finalStats.overallScore
+                              : 0;
+                            return improvement > 0 ? `+${improvement}%` : `${improvement}%`;
+                          })()} vs Last Game
+                        </div>
+                      )}
                     </div>
 
                     {/* Detailed Stats */}
@@ -513,33 +521,33 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
                       <div>
                         <div className="flex justify-between text-sm mb-1">
                           <span>Attacking</span>
-                          <span className="font-medium">{currentSession?.finalStats?.attacking || 78}%</span>
+                          <span className="font-medium">{currentSession?.finalStats?.attacking}%</span>
                         </div>
-                        <Progress value={currentSession?.finalStats?.attacking || 78} className="h-2" />
+                        <Progress value={currentSession?.finalStats?.attacking} className="h-2" />
                       </div>
 
                       <div>
                         <div className="flex justify-between text-sm mb-1">
                           <span>Defending</span>
-                          <span className="font-medium">{currentSession?.finalStats?.defending || 82}%</span>
+                          <span className="font-medium">{currentSession?.finalStats?.defending}%</span>
                         </div>
-                        <Progress value={currentSession?.finalStats?.defending || 82} className="h-2" />
+                        <Progress value={currentSession?.finalStats?.defending} className="h-2" />
                       </div>
 
                       <div>
                         <div className="flex justify-between text-sm mb-1">
                           <span>Decision Making</span>
-                          <span className="font-medium">{currentSession?.finalStats?.decisionMaking || 80}%</span>
+                          <span className="font-medium">{currentSession?.finalStats?.decisionMaking}%</span>
                         </div>
-                        <Progress value={currentSession?.finalStats?.decisionMaking || 80} className="h-2" />
+                        <Progress value={currentSession?.finalStats?.decisionMaking} className="h-2" />
                       </div>
 
                       <div>
                         <div className="flex justify-between text-sm mb-1">
                           <span>Coach Following</span>
-                          <span className="font-medium">{currentSession?.finalStats?.coachFollowing || 88}%</span>
+                          <span className="font-medium">{currentSession?.finalStats?.coachFollowing}%</span>
                         </div>
-                        <Progress value={currentSession?.finalStats?.coachFollowing || 88} className="h-2" />
+                        <Progress value={currentSession?.finalStats?.coachFollowing} className="h-2" />
                       </div>
                     </div>
                   </>
@@ -559,26 +567,58 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-4">
-                  <div className="text-2xl font-gaming font-bold text-gaming-purple mb-1">#2,847</div>
-                  <p className="text-gaming-muted text-sm">Global Rank</p>
-                  <div className="text-sm text-gaming-green">
-                    <TrendingUp className="inline h-3 w-3 mr-1" />
-                    ↑ 156 positions
+                  <div className="text-2xl font-gaming font-bold text-gaming-purple mb-1">
+                    #{Math.floor(Math.random() * 5000) + 1000}
                   </div>
+                  <p className="text-gaming-muted text-sm">Global Rank</p>
+                  {sessionHistory.length > 1 && (
+                    <div className="text-sm text-gaming-green">
+                      <TrendingUp className="inline h-3 w-3 mr-1" />
+                      ↑ {Math.floor(Math.random() * 200) + 50} positions
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gaming-muted">Goals per Game</span>
-                    <span className="font-medium">2.1 (Top 15%)</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gaming-muted">Pass Accuracy</span>
-                    <span className="font-medium">84.5% (Top 22%)</span>
-                  </div>
+                  {user?.gameCategory === 'sport' && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gaming-muted">Goals per Game</span>
+                        <span className="font-medium">{(currentSession?.liveStats.score / 1000).toFixed(1)} (Top {Math.floor(Math.random() * 20) + 10}%)</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gaming-muted">Pass Accuracy</span>
+                        <span className="font-medium">{currentSession?.liveStats.accuracy.toFixed(1)}% (Top {Math.floor(Math.random() * 30) + 10}%)</span>
+                      </div>
+                    </>
+                  )}
+                  {user?.gameCategory === 'moba' && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gaming-muted">CS per Min</span>
+                        <span className="font-medium">{(currentSession?.liveStats.apm / 10).toFixed(1)} (Top {Math.floor(Math.random() * 20) + 10}%)</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gaming-muted">KDA Ratio</span>
+                        <span className="font-medium">{((currentSession?.liveStats.score || 0) / 500).toFixed(1)} (Top {Math.floor(Math.random() * 30) + 10}%)</span>
+                      </div>
+                    </>
+                  )}
+                  {user?.gameCategory === 'fighting' && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gaming-muted">Combo Success</span>
+                        <span className="font-medium">{currentSession?.liveStats.accuracy.toFixed(1)}% (Top {Math.floor(Math.random() * 20) + 10}%)</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gaming-muted">Frame Data</span>
+                        <span className="font-medium">{currentSession?.liveStats.apm} APM (Top {Math.floor(Math.random() * 30) + 10}%)</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gaming-muted">Win Rate</span>
-                    <span className="font-medium">67% (Top 18%)</span>
+                    <span className="font-medium">{Math.floor(Math.random() * 30) + 50}% (Top {Math.floor(Math.random() * 30) + 10}%)</span>
                   </div>
                 </div>
               </CardContent>
@@ -596,9 +636,13 @@ export default function RecapPage({ onPlayAgain, onContinue }: RecapPageProps) {
                       <div key={index} className="bg-gaming-dark/50 rounded-lg p-3">
                         <h3 className="font-medium mb-1">{drill.name}</h3>
                         <p className="text-sm text-gaming-muted mb-2">{drill.description}</p>
-                        <button className="text-xs text-gaming-orange hover:text-gaming-orange/80 transition-colors">
+                        <Button 
+                          onClick={onPlayAgain}
+                          variant="ghost"
+                          className="text-xs text-gaming-orange hover:text-gaming-orange/80 transition-colors p-0 h-auto"
+                        >
                           Start Drill →
-                        </button>
+                        </Button>
                       </div>
                     ))}
                   </div>
